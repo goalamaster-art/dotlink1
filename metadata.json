@@ -1,5 +1,6 @@
 {
   "name": "DotLink Co., Ltd. - Global B2B Solutions",
   "description": "Official website for DotLink, an Alibaba.com partner specializing in global trade, buyer matching, and AI-driven business solutions.",
-  "requestFramePermissions": []
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }
