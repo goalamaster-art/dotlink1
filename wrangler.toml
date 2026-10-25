@@ -3,6 +3,10 @@ name = "dotlink1"
 pages_build_output_dir = "dist"
 compatibility_date = "2026-09-01"
 
+# 빌드 Node 버전. toml 이 있으면 대시보드 변수 대신 이 값이 쓰인다(2026-10-25 NODE_VERSION 유실 경험).
+[vars]
+NODE_VERSION = "22"
+
 [[d1_databases]]
 binding = "DB"
 database_name = "dotlink-leads"

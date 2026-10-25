@@ -1,0 +1,2 @@
+-- 메일 알림 성공 여부 (2026-10-25)
+ALTER TABLE consults ADD COLUMN mailed INTEGER NOT NULL DEFAULT 0;
