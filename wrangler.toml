@@ -1,0 +1,10 @@
+# Cloudflare Pages 프로젝트 dotlink1 (dotlink.co.kr). 빌드는 대시보드의 npm run build → dist.
+name = "dotlink1"
+pages_build_output_dir = "dist"
+compatibility_date = "2026-09-01"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "dotlink-leads"
+database_id = "66b8c3d1-b32b-4d40-a072-61486652b566"
+migrations_dir = "migrations"
