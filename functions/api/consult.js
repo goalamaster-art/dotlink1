@@ -4,6 +4,7 @@
 
 const MAX = { company: 100, name: 50, contact: 100, work: 1000 };
 const PER_IP_PER_HOUR = 5;
+const SOURCES = ['전자책', '스레드', '인스타', '검색', '기타']; // 폼 '어디서 보셨나요'(선택)
 
 const json = (body, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json; charset=utf-8' } });
@@ -21,6 +22,8 @@ export async function onRequestPost({ request, env }) {
     f[k] = v;
   }
   if (b.consent !== true) return json({ ok: false, error: 'consent_required' }, 400);
+  const source = SOURCES.includes(b.source) ? b.source : null;
+  const utm = String(b.utm_source ?? '').trim().slice(0, 50).replace(/[^\w.-]/g, '') || null;
 
   const ip = request.headers.get('CF-Connecting-IP') || '';
   const now = new Date();
@@ -37,12 +40,12 @@ export async function onRequestPost({ request, env }) {
   if (recent.n >= PER_IP_PER_HOUR) return json({ ok: false, error: 'too_many' }, 429);
 
   const ins = await env.DB.prepare(
-    'INSERT INTO consults (ts, company, name, contact, work, consent_at, ip, ua) VALUES (?1, ?2, ?3, ?4, ?5, ?1, ?6, ?7)'
-  ).bind(ts, f.company, f.name, f.contact, f.work, ip, (request.headers.get('User-Agent') || '').slice(0, 200)).run();
+    'INSERT INTO consults (ts, company, name, contact, work, consent_at, ip, ua, source, utm_source) VALUES (?1, ?2, ?3, ?4, ?5, ?1, ?6, ?7, ?8, ?9)'
+  ).bind(ts, f.company, f.name, f.contact, f.work, ip, (request.headers.get('User-Agent') || '').slice(0, 200), source, utm).run();
   const id = ins.meta.last_row_id;
 
   const kst = new Date(now.getTime() + 9 * 3600e3).toISOString().slice(0, 16).replace('T', ' ');
-  const text = `[도트링크 상담 신청 #${id}]\n회사: ${f.company}\n이름: ${f.name}\n연락처: ${f.contact}\n업무: ${f.work}\n접수: ${kst} KST`;
+  const text = `[도트링크 상담 신청 #${id}]\n회사: ${f.company}\n이름: ${f.name}\n연락처: ${f.contact}\n업무: ${f.work}\n경로: ${source || '-'}${utm ? ` (utm ${utm})` : ''}\n접수: ${kst} KST`;
   try {
     const r = await fetch(`https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
       method: 'POST',
