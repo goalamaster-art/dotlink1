@@ -1,6 +1,6 @@
 // POST /api/consult — 홈페이지 상담 신청 접수.
 // D1(dotlink-leads.consults)에 먼저 저장하고, 대표 텔레그램으로 알린다. 알림이 실패해도 신청은 남는다.
-// 비밀값: TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID, MAIL_WEBHOOK_URL, MAIL_WEBHOOK_SECRET (Pages secret)
+// 비밀값: TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID, MAIL_WEBHOOK_URL (Pages secret — 웹앱 주소 자체가 열쇠라 공개 금지)
 
 const MAX = { company: 100, name: 50, contact: 100, work: 1000 };
 const PER_IP_PER_HOUR = 5;
@@ -52,13 +52,14 @@ export async function onRequestPost({ request, env }) {
     if (r.ok) await env.DB.prepare('UPDATE consults SET notified = 1 WHERE id = ?1').bind(id).run();
   } catch { /* 저장은 끝났다 — 알림 실패는 notified=0 으로 남는다 */ }
 
-  // 메일 알림: ceo@ Workspace 의 Apps Script 웹앱이 대신 보낸다. 주소가 설정됐을 때만 동작, 실패는 mailed=0.
+  // 메일 알림: ceo@ Workspace 의 Apps Script 웹앱이 대신 보낸다(받는 사람 ceo@ 고정, 제목이 상담 알림 형식일 때만 발송).
+  // 주소가 설정됐을 때만 동작, 실패는 mailed=0.
   if (env.MAIL_WEBHOOK_URL) {
     try {
       const r = await fetch(env.MAIL_WEBHOOK_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ secret: env.MAIL_WEBHOOK_SECRET, subject: `[도트링크 상담 신청 #${id}] ${f.company}`, text }),
+        body: JSON.stringify({ subject: `[도트링크 상담 신청 #${id}] ${f.company}`, text }),
       });
       if ((await r.json().catch(() => ({}))).ok) await env.DB.prepare('UPDATE consults SET mailed = 1 WHERE id = ?1').bind(id).run();
     } catch { /* 저장은 끝났다 */ }
